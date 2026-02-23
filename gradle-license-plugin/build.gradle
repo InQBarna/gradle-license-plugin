@@ -47,10 +47,13 @@ dependencies {
 
   testRuntimeOnly files(createClasspathManifest)
   testRuntimeOnly libs.android.plugin
+  testRuntimeOnly libs.junit.platform.launcher
 
   testImplementation localGroovy()
   testImplementation gradleTestKit()
   testImplementation libs.spock, { exclude module: 'groovy-all' } // Use localGroovy()
+  testImplementation libs.spock.junit4, { exclude module: 'groovy-all' } // JUnit 4 @Rule support
+  testImplementation libs.junit
   testImplementation libs.xmlunit
   testImplementation libs.commons
 }

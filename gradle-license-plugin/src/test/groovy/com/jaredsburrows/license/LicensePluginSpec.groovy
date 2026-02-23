@@ -213,7 +213,8 @@ final class LicensePluginSpec extends Specification {
       apply plugin: 'com.jaredsburrows.license'
 
       android {
-        compileSdkVersion $compileSdkVersion
+        namespace 'com.example'
+        compileSdk $compileSdkVersion
 
         defaultConfig {
           if (project.plugins.hasPlugin("com.android.application")) applicationId 'com.example'
@@ -239,7 +240,8 @@ final class LicensePluginSpec extends Specification {
       apply plugin: 'com.jaredsburrows.license'
 
       android {
-        compileSdkVersion $compileSdkVersion
+        namespace 'com.example'
+        compileSdk $compileSdkVersion
 
         defaultConfig {
           if (project.plugins.hasPlugin("com.android.application")) applicationId 'com.example'
@@ -257,10 +259,8 @@ final class LicensePluginSpec extends Specification {
     where:
     androidPlugin << [
       // AppPlugin
-      'android',
       'com.android.application',
       // LibraryPlugin
-      'android-library',
       'com.android.library',
       // TestPlugin
       'com.android.test',

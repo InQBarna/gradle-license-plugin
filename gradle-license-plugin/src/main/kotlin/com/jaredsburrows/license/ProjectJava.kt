@@ -2,16 +2,10 @@ package com.jaredsburrows.license
 
 import org.gradle.api.Project
 
-/** Returns true if Java Gradle project. */
-internal fun Project.isJavaProject(): Boolean =
-  hasPlugin(
-    listOf(
-      // JavaPlugin
-      "java",
-      // KotlinJvmPlugin
-      "org.jetbrains.kotlin.jvm",
-    ),
-  )
+internal fun Project.onJavaProject(action: (Project) -> Unit) {
+  pluginManager.withPlugin("java") { action(this) }
+  pluginManager.withPlugin("org.jetbrains.kotlin.jvm") { action(this) }
+}
 
 /** Configure for Java projects. */
 internal fun Project.configureJavaProject() {

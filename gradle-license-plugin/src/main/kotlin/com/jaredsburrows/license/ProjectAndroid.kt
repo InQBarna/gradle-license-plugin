@@ -1,73 +1,32 @@
 package com.jaredsburrows.license
 
-import com.android.build.gradle.AppExtension
-import com.android.build.gradle.AppPlugin
-import com.android.build.gradle.BaseExtension
-import com.android.build.gradle.LibraryExtension
-import com.android.build.gradle.LibraryPlugin
-import com.android.build.gradle.TestExtension
-import com.android.build.gradle.TestPlugin
-import com.android.build.gradle.api.BaseVariant
-import org.gradle.api.DomainObjectSet
+import com.android.build.api.dsl.CommonExtension
+import com.android.build.api.variant.AndroidComponentsExtension
 import org.gradle.api.Project
 import java.util.Locale
 
-/** Returns true if Android Gradle project. */
-internal fun Project.isAndroidProject(): Boolean =
-  hasPlugin(
-    listOf(
-      // AppPlugin
-      "android",
-      "com.android.application",
-      // LibraryPlugin
-      "android-library",
-      "com.android.library",
-      // TestPlugin
-      "com.android.test",
-    ),
-  )
-
-/**
- * Configure for Android projects.
- *
- * AppPlugin - "android", "com.android.application"
- * LibraryPlugin - "android-library", "com.android.library"
- * TestPlugin - "com.android.test"
- */
-internal fun Project.configureAndroidProject() {
-  plugins.all {
-    when (it) {
-      is AppPlugin -> {
-        extensions.getByType(AppExtension::class.java).run {
-          configureVariant(this, applicationVariants)
-          configureVariant(this, testVariants)
-          configureVariant(this, unitTestVariants)
-        }
-      }
-
-      is LibraryPlugin -> {
-        extensions.getByType(LibraryExtension::class.java).run {
-          configureVariant(this, libraryVariants)
-          configureVariant(this, testVariants)
-          configureVariant(this, unitTestVariants)
-        }
-      }
-
-      is TestPlugin -> {
-        extensions.getByType(TestExtension::class.java).run {
-          configureVariant(this, applicationVariants)
-        }
-      }
-    }
-  }
+internal fun Project.onAndroidProject(action: (Project) -> Unit) {
+  pluginManager.withPlugin("com.android.application") { action(this) }
+  pluginManager.withPlugin("com.android.library") { action(this) }
+  pluginManager.withPlugin("com.android.test") { action(this) }
 }
 
-private fun Project.configureVariant(
-  baseExtension: BaseExtension,
-  variants: DomainObjectSet<out BaseVariant>? = null,
-) {
-  // Configure tasks for all variants
-  variants?.all { variant ->
+/**
+ * Configure for Android projects using the AGP 9+ variant API.
+ *
+ * Supports:
+ *  - AppPlugin ("com.android.application")
+ *  - LibraryPlugin ("com.android.library")
+ *  - TestPlugin ("com.android.test")
+ */
+internal fun Project.configureAndroidProject() {
+  val androidComponents = extensions.findByType(AndroidComponentsExtension::class.java) ?: return
+  val commonExtension = extensions.findByType(CommonExtension::class.java) ?: return
+
+  androidComponents.onVariants { variant ->
+
+    logger.lifecycle("Configuring Android License Report for variant: ${variant.name}")
+
     val name =
       variant.name.replaceFirstChar {
         if (it.isLowerCase()) {
@@ -89,11 +48,12 @@ private fun Project.configureVariant(
 
       // Custom for Android tasks
       val sourceSetName = if (it.useVariantSpecificAssetDirs) variant.name else "main"
-      it.assetDirs = baseExtension.sourceSets
+      it.assetDirs = commonExtension.sourceSets
         .findByName(sourceSetName)
         ?.assets
-        ?.srcDirs
-        ?.toList() ?: emptyList()
+        ?.directories
+        ?.map { path -> file(path) }
+        ?: emptyList()
       it.variantName = variant.name
     }
   }
